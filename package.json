@@ -1,15 +1,23 @@
 {
   "name": "node-debug",
-  "main": "./lib/node-debug",
+  "main": "./dist/lib/node-debug",
+  "scripts": {
+    "build": "tsc"
+  },
   "version": "0.0.0",
   "description": "A short description of your package",
-  "keywords": [
-  ],
+  "keywords": [],
   "repository": "https://github.com/atom/node-debug",
   "license": "MIT",
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
   },
   "dependencies": {
+    "@types/atom": "^1.31.1",
+    "@types/node": "^11.12.0",
+    "ts-loader": "^5.3.3",
+    "tslint": "^5.14.0",
+    "tslint-loader": "^3.5.4",
+    "typescript": "^3.3.4000"
   }
 }

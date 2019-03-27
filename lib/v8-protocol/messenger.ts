@@ -1,12 +1,11 @@
-'use babel';
 
 export default class Messenger {
+  public events = {};
+  public callbacks = {};
+  private seq = 0;
 
-  constructor(socket) {
-    this.socket = socket;
+  constructor(private socket) {
     this.callbacks = {};
-    this.events = {};
-    this.seq = 0;
 
     socket.onopen = (event) => {
       if (this.events['open']) {

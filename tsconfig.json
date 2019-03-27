@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "importHelpers": true,
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "skipLibCheck": true,
+    "outDir": "./dist/",
+    "rootDir": "."
+  },
+  "include": [
+    "./lib/*"
+  ],
+  "exclude": [],
+}
