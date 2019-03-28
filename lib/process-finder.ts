@@ -3,7 +3,6 @@ const http = require('http');
 
 export default class ProcessFinder {
   constructor() {
-
   }
 
   find() {
