@@ -3,11 +3,13 @@ export default class Messenger {
   public events = {};
   public callbacks = {};
   private seq = 0;
+  private isOpen = false;
 
   constructor(private socket) {
     this.callbacks = {};
 
     socket.onopen = (event) => {
+      this.isOpen = true;
       if (this.events['open']) {
         this.events['open'].forEach((cb) => cb());
       }
@@ -34,6 +36,11 @@ export default class Messenger {
   }
 
   send(data) {
+    if (!this.isOpen) {
+      this.on('open', () => this.send(data)) ;
+      return;
+    }
+
     this.seq++;
     const seq = this.seq;
     data.id = seq;
@@ -57,11 +64,5 @@ export default class Messenger {
     }
 
     this.events[event].push(cb);
-  }
-}
-
-function Command(method) {
-  return {
-    method: method,
   }
 }

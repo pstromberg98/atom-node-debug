@@ -1,8 +1,9 @@
 {
   "name": "node-debug",
-  "main": "./dist/lib/node-debug",
+  "main": "./dist/lib/node-debug.js",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "build:watch": "tsc -w"
   },
   "version": "0.0.0",
   "description": "A short description of your package",
