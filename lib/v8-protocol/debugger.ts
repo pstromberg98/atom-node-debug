@@ -3,6 +3,7 @@ import Messenger from './messenger';
 export interface IDebugger {
   enable();
   disable();
+  pause();
 }
 
 export class Debugger implements IDebugger {
@@ -24,6 +25,7 @@ export class Debugger implements IDebugger {
       this.messenger.send(runMessage);
 
       this.enable();
+      // this.resume();
     });
   }
 
@@ -37,6 +39,10 @@ export class Debugger implements IDebugger {
 
   public pause() {
     return this.messenger.send(DebugCommand.create('pause'));
+  }
+
+  public resume() {
+    return this.messenger.send(DebugCommand.create('resume'));
   }
 }
 

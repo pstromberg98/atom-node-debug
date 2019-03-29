@@ -15,6 +15,12 @@ export default class Messenger {
       }
     };
 
+    socket.onclose = () => {
+      if (this.events['close']) {
+        this.events['close'].forEach((cb) => cb());
+      }
+    };
+
     socket.onmessage = (message) => {
       if (!message) {
         return;

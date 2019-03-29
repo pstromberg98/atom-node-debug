@@ -5,11 +5,11 @@ export default class ProcessFinder {
   constructor() {
   }
 
-  find() {
+  find(host, port) {
     return new Promise((resolve, reject) => {
       http.get({
-        hostname: '127.0.0.1',
-        port: 9229,
+        hostname: host,
+        port: port,
         path: '/json/list',
         agent: false,
       }, (res) => {

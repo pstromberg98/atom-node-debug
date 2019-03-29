@@ -9,10 +9,14 @@ export class Utils {
     const which = '/usr/bin/which';
     let path;
     if (fs.existsSync(which)) {
-      path = cp.execSync(`${which} node`, {
+      const lines = cp.execSync(`${which} node`, {
         shell: '/bin/bash',
         env,
-      }).toString();
+      }).toString().split(/\r?\n/);
+
+      if (lines.length > 0) {
+        path = lines[0];
+      }
     }
 
     return path;
@@ -20,7 +24,6 @@ export class Utils {
 }
 
 export function extendObject<T>(toObject: T, fromObject: T): T {
-
     for (let key in fromObject) {
         if (fromObject.hasOwnProperty(key)) {
             toObject[key] = fromObject[key];
