@@ -40,9 +40,28 @@ export async function activate(state) {
       if (!finder) {
         finder = new ProcessFinder();
         finder.find('127.0.0.1', port).then((url) => {
-          console.log(url);
           const socket = new WebSocket(url as any);
           const _debugger = new Debugger(socket);
+
+          _debugger.onScriptParsed('test1.js').then((data) => {
+            console.log('Here: ', data);
+            _debugger.getPossibleBreakpoints({
+              scriptId: data.scriptId+'',
+              lineNumber: 0,
+            }).then((possibleBreakpoints) => {
+              console.log(possibleBreakpoints);
+              if (possibleBreakpoints && possibleBreakpoints.length > 1) {
+                _debugger.setBreakpoint(possibleBreakpoints[3])
+                  .then((breakpoint) => {
+                    console.log(breakpoint);
+                    _debugger.resume();
+                    setTimeout(() => {
+                      _debugger.resume();
+                    }, 2000);
+                  });
+              }
+            });
+          });
         });
       }
     }

@@ -21,6 +21,10 @@ export class Utils {
 
     return path;
   }
+
+  public static getFileFromAbsPath(absPath) {
+    return path.basename(absPath);  
+  }
 }
 
 export function extendObject<T>(toObject: T, fromObject: T): T {
