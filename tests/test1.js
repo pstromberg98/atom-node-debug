@@ -1,3 +1,4 @@
+var test = 'neat';
 console.log('Test 1');
 console.log('Test 2');
-console.log('Test 3');
+console.log(test);

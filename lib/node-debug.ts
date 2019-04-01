@@ -53,7 +53,14 @@ export async function activate(state) {
             _debugger.resume();
           };
 
-          console.log(resume);
+          const getProperties = (objectId) => {
+            _debugger.getProperties(objectId).then((resp) => {
+              console.log(resp);
+            });
+          }
+
+          console.log('Resume: ', resume);
+          console.log('Get Properties: ', getProperties);
 
           gutterView.onLineClicked$.subscribe((event) => {
             const existingBreakpoint = breakpoints[`${event.editorId}:${event.lineNumber}`];
@@ -104,7 +111,6 @@ export async function activate(state) {
                   scriptId: data.scriptId+'',
                   lineNumber: 0,
                 }).then((possibleBreakpoints) => {
-                  _debugger.resume();
                   console.log(possibleBreakpoints);
                   if (possibleBreakpoints && possibleBreakpoints.length > 1) {
                     _debugger.setBreakpointByUrl(1, data.url);

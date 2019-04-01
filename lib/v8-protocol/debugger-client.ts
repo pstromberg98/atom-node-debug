@@ -113,9 +113,10 @@ export class DebuggerClient {
     });
   }
 
-  public onScriptParsed(scriptFile): Promise<any> {
-    return new Promise((resolve, reject) => {
-    });
+  public getProperties(objectId) {
+    return this.messenger.send(RuntimeCommand.create('getProperties', {
+      objectId,
+    })); 
   }
 }
 
@@ -123,6 +124,15 @@ class DebugCommand {
   public static create(method, params?) {
     return {
       method: `Debugger.${method}`,
+      params,
+    };
+  }
+}
+
+class RuntimeCommand {
+  public static create(method, params?) {
+    return {
+      method: `Runtime.${method}`,
       params,
     };
   }
