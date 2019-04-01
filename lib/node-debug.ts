@@ -1,11 +1,12 @@
 'use babel';
 
 import { CompositeDisposable } from 'atom';
-import { Debugger } from './v8-protocol/debugger';
+import { DebuggerClient } from './v8-protocol/debugger-client';
 import { Utils } from './utils';
 import ProcessFinder from './process-finder';
 import * as cp from 'child_process';
 import * as fs from 'fs';
+import { filter, take } from 'rxjs/operators';
 
 const http = require('http');
 const Net = require('net');
@@ -36,31 +37,31 @@ export async function activate(state) {
   cpSpawn.stderr.on('data', (data) => {
     if (data) {
       console.log(data.toString());
-
       if (!finder) {
         finder = new ProcessFinder();
         finder.find('127.0.0.1', port).then((url) => {
           const socket = new WebSocket(url as any);
-          const _debugger = new Debugger(socket);
+          const _debugger = new DebuggerClient(socket);
 
-          _debugger.onScriptParsed('test1.js').then((data) => {
-            console.log('Here: ', data);
-            _debugger.getPossibleBreakpoints({
-              scriptId: data.scriptId+'',
-              lineNumber: 0,
-            }).then((possibleBreakpoints) => {
-              console.log(possibleBreakpoints);
-              if (possibleBreakpoints && possibleBreakpoints.length > 1) {
-                _debugger.setBreakpoint(possibleBreakpoints[3])
-                  .then((breakpoint) => {
-                    console.log(breakpoint);
-                    _debugger.resume();
-                    setTimeout(() => {
-                      _debugger.resume();
-                    }, 2000);
-                  });
-              }
-            });
+          _debugger.onScriptParse$
+            .pipe(filter((e) => Utils.getFileFromAbsPath(e.url) === 'test1.js'), take(1))
+              .subscribe((data) => {
+                console.log('Here: ', data);
+                _debugger.getPossibleBreakpoints({
+                  scriptId: data.scriptId+'',
+                  lineNumber: 0,
+                }).then((possibleBreakpoints) => {
+                  console.log(possibleBreakpoints);
+                  if (possibleBreakpoints && possibleBreakpoints.length > 1) {
+                    _debugger.setBreakpoint(possibleBreakpoints[3])
+                      .then((breakpoint) => {
+                        _debugger.resume();
+                        _debugger.onPause$.subscribe((event) => {
+                          console.log('On Pause: ', event);
+                        });
+                      });
+                  }
+                });
           });
         });
       }

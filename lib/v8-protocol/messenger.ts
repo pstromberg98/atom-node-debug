@@ -1,3 +1,4 @@
+import { IResponse } from './interfaces/IResponse';
 
 export default class Messenger {
   public events = {};
@@ -41,7 +42,7 @@ export default class Messenger {
     };
   }
 
-  send(data) {
+  send(data): Promise<any> {
     if (!this.isOpen) {
       this.on('open', () => this.send(data)) ;
       return;
@@ -53,7 +54,9 @@ export default class Messenger {
 
     let outerResolve;
     this.callbacks[seq] = (message) => {
-      outerResolve(message);
+      if (message) {
+        outerResolve(message.result);
+      }
     };
 
     this.socket.send(JSON.stringify(data));
