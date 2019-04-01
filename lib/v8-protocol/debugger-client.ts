@@ -96,6 +96,14 @@ export class DebuggerClient {
     }));
   }
 
+  // TODO: Add the rest of the parameters
+  public setBreakpointByUrl(lineNumber, url) {
+    return this.messenger.send(DebugCommand.create('setBreakpointByUrl', {
+      lineNumber,
+      url,
+    }));
+  }
+
   public getPossibleBreakpoints(start, end?): Promise<Debugger.Location[]> {
     return this.messenger.send(DebugCommand.create('getPossibleBreakpoints', {
       start,

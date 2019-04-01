@@ -1,22 +1,27 @@
 'use babel';
 
-import { CompositeDisposable } from 'atom';
+import { CompositeDisposable, DisplayMarker, TextEditor, Range } from 'atom';
 import { DebuggerClient } from './v8-protocol/debugger-client';
 import { Utils } from './utils';
 import ProcessFinder from './process-finder';
+import { GutterView } from './views/gutter-view';
+import { filter, take } from 'rxjs/operators';
 import * as cp from 'child_process';
 import * as fs from 'fs';
-import { filter, take } from 'rxjs/operators';
+import * as _ from 'lodash';
 
 const http = require('http');
 const Net = require('net');
 const port = 5000;
 let cpSpawn;
 let finder;
-var breakPoints = {};
 var sequence = 1;
 
 export async function activate(state) {
+  const breakpoints = {};
+  const gutterView = new GutterView();
+  gutterView.setup();
+
   const nodePath = Utils.getNodePath();
   console.log(__dirname);
   const command =
@@ -43,23 +48,67 @@ export async function activate(state) {
           const socket = new WebSocket(url as any);
           const _debugger = new DebuggerClient(socket);
 
+          // For debugging
+          const resume = () => {
+            _debugger.resume();
+          };
+
+          console.log(resume);
+
+          gutterView.onLineClicked$.subscribe((event) => {
+            const existingBreakpoint = breakpoints[`${event.editorId}:${event.lineNumber}`];
+            if (!existingBreakpoint) {
+              console.log(`%cSetting Breakpoint @ %c${event.url}:${event.lineNumber}`, 'color: blue', 'color: black');
+              _debugger.setBreakpointByUrl(event.lineNumber, event.url).then(() => {
+                breakpoints[`${event.editorId}:${event.lineNumber}`] =
+                  gutterView.setBreakpointMarker(event.editorId, event.lineNumber);
+              });
+            } else {
+              console.log(`%cRemoving Breakpoint @ %c${event.url}:${event.lineNumber}`, 'color: red', 'color: black');
+              gutterView.removeBreakpointMarker(breakpoints[`${event.editorId}:${event.lineNumber}`]);
+              breakpoints[`${event.editorId}:${event.lineNumber}`] = null;
+            }
+          });
+
+          _debugger.onPause$.subscribe((event) => {
+            console.log(event);
+            if (event.hitBreakpoints && event.hitBreakpoints.length) {
+              const firstBreakpoint = event.hitBreakpoints[0];
+              const splitBreakpoint = firstBreakpoint.split(':');
+              const script = splitBreakpoint[0];
+              const lineNumber = splitBreakpoint[1];
+              const columnNumber = splitBreakpoint[2];
+
+              atom.workspace.open(script).then((editor: TextEditor) => {
+                _.forEach(editor.getCursors(), (cursor) => {
+                  cursor.setScreenPosition([+lineNumber, +columnNumber], {
+                    autoScroll: true,
+                  })
+                });
+
+                const marker = editor
+                  .markScreenPosition([+lineNumber, +columnNumber]);
+
+                editor.decorateMarker(marker, {
+                  type: 'line' ,
+                  class: 'breakpoint-line',
+                });
+              });
+            }
+          });
+
           _debugger.onScriptParse$
             .pipe(filter((e) => Utils.getFileFromAbsPath(e.url) === 'test1.js'), take(1))
               .subscribe((data) => {
-                console.log('Here: ', data);
                 _debugger.getPossibleBreakpoints({
                   scriptId: data.scriptId+'',
                   lineNumber: 0,
                 }).then((possibleBreakpoints) => {
+                  _debugger.resume();
                   console.log(possibleBreakpoints);
                   if (possibleBreakpoints && possibleBreakpoints.length > 1) {
-                    _debugger.setBreakpoint(possibleBreakpoints[3])
-                      .then((breakpoint) => {
-                        _debugger.resume();
-                        _debugger.onPause$.subscribe((event) => {
-                          console.log('On Pause: ', event);
-                        });
-                      });
+                    _debugger.setBreakpointByUrl(1, data.url);
+                    // _debugger.setBreakpoint(possibleBreakpoints[3]);
                   }
                 });
           });
