@@ -62,14 +62,7 @@ export class DebuggerClient {
     });
 
     this.messenger.on('open', () => {
-      const runMessage = {
-        method: 'Runtime.runIfWaitingForDebugger',
-      };
-
-      this.messenger.send(runMessage);
-
       this.enable();
-      // this.resume();
     });
   }
 
@@ -97,7 +90,7 @@ export class DebuggerClient {
   }
 
   // TODO: Add the rest of the parameters
-  public setBreakpointByUrl(lineNumber, url) {
+  public setBreakpointByUrl(lineNumber, url): Promise<{breakpointId: string}> {
     return this.messenger.send(DebugCommand.create('setBreakpointByUrl', {
       lineNumber,
       url,
@@ -113,10 +106,26 @@ export class DebuggerClient {
     });
   }
 
+  public removeBreakpoint(breakpointId) {
+    return this.messenger.send(DebugCommand.create('removeBreakpoint', {
+      breakpointId,
+    }));
+  }
+
+  public stepOver() {
+    return this.messenger.send(DebugCommand.create('stepOver'));
+  }
+
   public getProperties(objectId) {
     return this.messenger.send(RuntimeCommand.create('getProperties', {
       objectId,
-    })); 
+    })).then((response) => {
+      return (response || {}).result;
+    });
+  }
+
+  public runIfWaitingForDebugger() {
+    return this.messenger.send(RuntimeCommand.create('runIfWaitingForDebugger'));
   }
 }
 

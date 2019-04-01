@@ -3,6 +3,7 @@
 import { CompositeDisposable, DisplayMarker, TextEditor, Range } from 'atom';
 import { DebuggerClient } from './v8-protocol/debugger-client';
 import { Utils } from './utils';
+import { DebugSession } from './debug-session';
 import ProcessFinder from './process-finder';
 import { GutterView } from './views/gutter-view';
 import { filter, take } from 'rxjs/operators';
@@ -47,6 +48,7 @@ export async function activate(state) {
         finder.find('127.0.0.1', port).then((url) => {
           const socket = new WebSocket(url as any);
           const _debugger = new DebuggerClient(socket);
+          const session = new DebugSession(_debugger);
 
           // For debugging
           const resume = () => {
@@ -57,67 +59,15 @@ export async function activate(state) {
             _debugger.getProperties(objectId).then((resp) => {
               console.log(resp);
             });
-          }
+          };
+
+          const stepOver = () => {
+            _debugger.stepOver();
+          };
 
           console.log('Resume: ', resume);
           console.log('Get Properties: ', getProperties);
-
-          gutterView.onLineClicked$.subscribe((event) => {
-            const existingBreakpoint = breakpoints[`${event.editorId}:${event.lineNumber}`];
-            if (!existingBreakpoint) {
-              console.log(`%cSetting Breakpoint @ %c${event.url}:${event.lineNumber}`, 'color: blue', 'color: black');
-              _debugger.setBreakpointByUrl(event.lineNumber, event.url).then(() => {
-                breakpoints[`${event.editorId}:${event.lineNumber}`] =
-                  gutterView.setBreakpointMarker(event.editorId, event.lineNumber);
-              });
-            } else {
-              console.log(`%cRemoving Breakpoint @ %c${event.url}:${event.lineNumber}`, 'color: red', 'color: black');
-              gutterView.removeBreakpointMarker(breakpoints[`${event.editorId}:${event.lineNumber}`]);
-              breakpoints[`${event.editorId}:${event.lineNumber}`] = null;
-            }
-          });
-
-          _debugger.onPause$.subscribe((event) => {
-            console.log(event);
-            if (event.hitBreakpoints && event.hitBreakpoints.length) {
-              const firstBreakpoint = event.hitBreakpoints[0];
-              const splitBreakpoint = firstBreakpoint.split(':');
-              const script = splitBreakpoint[0];
-              const lineNumber = splitBreakpoint[1];
-              const columnNumber = splitBreakpoint[2];
-
-              atom.workspace.open(script).then((editor: TextEditor) => {
-                _.forEach(editor.getCursors(), (cursor) => {
-                  cursor.setScreenPosition([+lineNumber, +columnNumber], {
-                    autoScroll: true,
-                  })
-                });
-
-                const marker = editor
-                  .markScreenPosition([+lineNumber, +columnNumber]);
-
-                editor.decorateMarker(marker, {
-                  type: 'line' ,
-                  class: 'breakpoint-line',
-                });
-              });
-            }
-          });
-
-          _debugger.onScriptParse$
-            .pipe(filter((e) => Utils.getFileFromAbsPath(e.url) === 'test1.js'), take(1))
-              .subscribe((data) => {
-                _debugger.getPossibleBreakpoints({
-                  scriptId: data.scriptId+'',
-                  lineNumber: 0,
-                }).then((possibleBreakpoints) => {
-                  console.log(possibleBreakpoints);
-                  if (possibleBreakpoints && possibleBreakpoints.length > 1) {
-                    _debugger.setBreakpointByUrl(1, data.url);
-                    // _debugger.setBreakpoint(possibleBreakpoints[3]);
-                  }
-                });
-          });
+          console.log('Step Over: ', stepOver);
         });
       }
     }
